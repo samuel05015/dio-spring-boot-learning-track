@@ -14,6 +14,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -59,7 +60,14 @@ public class TransactionController {
 
     @PostMapping(value = "/ai", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = "audio/mp3")
     ResponseEntity<Resource> transcribe(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Envie um arquivo de áudio com conteúdo.");
+        }
+
         var userMessage = transcriptionModel.transcribe(file.getResource());
+        if (userMessage == null || userMessage.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Não foi possível identificar fala no áudio.");
+        }
         var result = chatClient.prompt().user(userMessage).call().content();
 
         byte[] audio = textToSpeechModel.call(result);
