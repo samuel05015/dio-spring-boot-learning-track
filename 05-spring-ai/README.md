@@ -1,5 +1,33 @@
 # DIO Spring Boot - Final Project 05: Spring AI (budgeting)
 
+## Evolução para o desafio da DIO
+
+Adição desenvolvida com apoio de IA sobre o projeto de referência da DIO. O endpoint `POST /transactions/ai` agora responde com HTTP 400 quando o arquivo chega vazio ou quando o serviço de transcrição não identifica fala. No primeiro caso, a aplicação nem faz a chamada de transcrição. No segundo, evita enviar um comando em branco ao modelo de linguagem ou gerar uma locução sem conteúdo.
+
+### Testar a validação
+
+Com JDK 25 instalado, execute os testes específicos. Eles usam substitutos para os serviços da OpenAI e dispensam uma chave de API.
+
+```sh
+./gradlew test --tests '*TransactionControllerAudioValidationTest'
+```
+
+Com o aplicativo em execução, faça um pedido com um arquivo vazio e confira o status 400.
+
+```sh
+touch audio-vazio.m4a
+curl -i -F 'file=@audio-vazio.m4a;type=audio/mp4' http://localhost:8080/transactions/ai
+```
+
+Para verificar o fluxo completo com a chave configurada, envie um M4A com uma frase em português brasileiro, por exemplo “Gastei 20 reais no mercado”. O endpoint devolve o áudio de resposta. Use apenas dados de exemplo ao testar a integração.
+
+```sh
+curl -f -F 'file=@meu-teste.m4a;type=audio/mp4' \
+  http://localhost:8080/transactions/ai -o resposta.mp3
+```
+
+A mudança mantém as regras de transação fora do controlador. A validação da entrada fica na camada HTTP, enquanto os casos de uso continuam responsáveis por salvar e consultar as transações.
+
 ## Introduction
 
 This final module applies Spring AI in a budgeting API while preserving the same layered architecture used across the track.
